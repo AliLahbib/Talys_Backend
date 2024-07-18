@@ -17,7 +17,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -26,35 +25,25 @@ public class WebSecurityConfiguration implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:4200") // Autoriser Angular à partir de ce domaine
-                .allowedMethods("GET", "POST", "PUT", "DELETE") // Méthodes HTTP autorisées
-                .allowedHeaders("*"); // Headers autorisés
+                .allowedOrigins("http://localhost:4200")
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedHeaders("*");
     }
-
-
-    private final JwtRequestFilter jwtRequestFilter;
-
-    @Autowired
-    public WebSecurityConfiguration(JwtRequestFilter jwtRequestFilter) {
-        this.jwtRequestFilter = jwtRequestFilter;
-    }
-
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity security) throws Exception {
-        System.out.println("request arrived **********");
-        return security.csrf().disable()
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.cors().and() // Ajoutez cette ligne pour activer CORS dans Spring Security
+                .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers("/signup", "/login").permitAll()
                 .and()
-                .authorizeHttpRequests().requestMatchers("/api/**")
-                .authenticated()
+                .authorizeHttpRequests().requestMatchers("/card/**").authenticated()
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
     }
 
     @Bean
@@ -67,5 +56,12 @@ public class WebSecurityConfiguration implements WebMvcConfigurer {
         return configuration.getAuthenticationManager();
     }
 
+    private final JwtRequestFilter jwtRequestFilter;
+
+    @Autowired
+    public WebSecurityConfiguration(JwtRequestFilter jwtRequestFilter) {
+        this.jwtRequestFilter = jwtRequestFilter;
+    }
 }
+
 
